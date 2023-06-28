@@ -10,8 +10,8 @@ class Cube:
                                   4, 4, 4, 4, 4, 4, 4, 4,
                                   5, 5, 5, 5, 5, 5, 5, 5])
         
-    def __init__(self, position):
-        self.position = position.copy()
+    # def __init__(self, position):
+    #     self.position = position.copy()
 
     def __eq__(self, other):
         if not isinstance(other, Cube):
@@ -63,14 +63,14 @@ class Cube:
         edges = np.zeros(12)
         if face == 0:
             edges[0:3] = self.position[8:11]
-            edges[3:6] = self.position[16:19]
+            edges[3:6] = self.position[32:35]
             edges[6:9] = self.position[24:27]
-            edges[9:12] = self.position[32:35]
+            edges[9:12] = self.position[16:19]
             edges = np.roll(edges, -3 * amount)
             new_pos[8:11] = edges[0:3]
-            new_pos[16:19] = edges[3:6]
+            new_pos[32:35] = edges[3:6]
             new_pos[24:27] = edges[6:9]
-            new_pos[32:35] = edges[9:12]
+            new_pos[16:19] = edges[9:12]
         elif face == 1:
             edges[0:3] = self.position[4:7]
             edges[3:6] = self.position[18:21]
