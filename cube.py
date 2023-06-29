@@ -9,6 +9,8 @@ class Cube3x3:
                      3, 3, 3, 3, 3, 3, 3, 3,
                      4, 4, 4, 4, 4, 4, 4, 4,
                      5, 5, 5, 5, 5, 5, 5, 5])
+    POS_SIZE = 48
+    ADJ_COUNT = 18
     
     def cleanstr(position):
         pos_str  = f"        {position[0]} {position[1]} {position[2]}\n"
@@ -125,3 +127,10 @@ class Cube3x3:
             new_pos[36:39] = edges[9:12]
         
         return new_pos
+    
+    def adjacents(position):
+        adj = np.empty((18, len(Cube3x3.GOAL)))
+        for face in range(6):
+            for amount in range(1, 4):
+                adj[3 * face + amount - 1] = Cube3x3.move(position, face, amount)
+        return adj
