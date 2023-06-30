@@ -1,8 +1,6 @@
 import numpy as np
 import math
 
-from cube import Cube3x3
-
 
 def generate_cache(puzzle, size):
     actual_size = math.ceil(size / 18) * 18 + 1
