@@ -11,6 +11,7 @@ class Cube3x3:
                      5, 5, 5, 5, 5, 5, 5, 5])
     POS_SIZE = 48
     ADJ_COUNT = 18
+    NAME = 'cube3x3'
     
     def cleanstr(position):
         pos_str  = f"        {position[0]} {position[1]} {position[2]}\n"
