@@ -28,11 +28,14 @@ def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
         cache[num_cached : num_cached + len(adj)] = adj
         num_cached += len(adj)
 
+    # remove last column
+    cache = np.delete(cache, -1, axis=1)
+
+    # remove any ending zero rows
+    cache = np.delete(cache, np.s_[-(actual_size - num_cached):], axis=0)
+
     if unique:
-        old = len(cache)
         cache = _remove_repeats(cache)
-        print()
-        print(old, len(cache), old - len(cache))
 
     return cache
 
@@ -46,5 +49,5 @@ def load_cache(puzzle, cache_name):
 
 
 def _remove_repeats(cache):
-    _, indices = np.unique(cache[:, :-2], axis=0, return_index=True)
+    _, indices = np.unique(cache[:, :-1], axis=0, return_index=True)
     return cache[np.sort(indices)]
