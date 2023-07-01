@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Cube3x3:
+class Cube3:
 
     GOAL = np.array([0, 0, 0, 0, 0, 0, 0, 0,
                      1, 1, 1, 1, 1, 1, 1, 1,
@@ -11,7 +11,7 @@ class Cube3x3:
                      5, 5, 5, 5, 5, 5, 5, 5])
     POS_SIZE = 48
     ADJ_COUNT = 18
-    NAME = 'cube3x3'
+    NAME = 'cube3'
     
     def cleanstr(position):
         pos_str  = f"        {position[0]} {position[1]} {position[2]}\n"
@@ -130,8 +130,13 @@ class Cube3x3:
         return new_pos
     
     def adjacents(position):
-        adj = np.empty((18, len(Cube3x3.GOAL)))
+        adj = np.empty((18, len(Cube3.GOAL)))
         for face in range(6):
             for amount in range(1, 4):
-                adj[3 * face + amount - 1] = Cube3x3.move(position, face, amount)
+                adj[3 * face + amount - 1] = Cube3.move(position, face, amount)
         return adj
+    
+    def inverse_move(move):
+        amount = move % 3 + 1
+        face = move // 3
+        return 3 * face + 4 - amount - 1
