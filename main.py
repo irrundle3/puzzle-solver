@@ -1,7 +1,7 @@
 import time
 
+from puzzles import Cube3
 import generator
-from puzzles.cube3 import Cube3
 
 
 def main():

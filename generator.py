@@ -1,10 +1,9 @@
 import numpy as np
-import math
 
 
 def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
-    actual_size = size + puzzle.ADJ_COUNT
-    cache = np.zeros((actual_size, puzzle.POS_SIZE + 2), dtype=np.int8)
+    actual_size = size + puzzle.ADJACENT_COUNT
+    cache = np.zeros((actual_size, puzzle.POSITION_SIZE + 2), dtype=np.int8)
 
     cache[0] = np.append(puzzle.GOAL, [0, -1])
     num_cached = 1
@@ -17,7 +16,7 @@ def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
         adj = puzzle.adjacents(curr[:-2])
         dist = np.full((len(adj), 1), curr[-2] + 1)
         adj = np.append(adj, dist, axis=1)
-        mov = np.reshape(np.arange(0, puzzle.ADJ_COUNT, dtype=np.int8), (-1, 1))
+        mov = np.reshape(np.arange(0, puzzle.ADJACENT_COUNT, dtype=np.int8), (-1, 1))
         adj = np.append(adj, mov, axis=1)
 
         if prevent_backtrace:
