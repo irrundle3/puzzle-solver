@@ -1,11 +1,26 @@
 import numpy as np
+from enum import Enum
+
+from puzzles import Puzzle
 
 
-def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
-    actual_size = size + puzzle.ADJACENT_COUNT
-    cache = np.zeros((actual_size, puzzle.POSITION_SIZE + 2), dtype=np.int8)
+class Repeats_Mode(Enum):
+    KEEP = 0
+    REMOVE = 1
+    STOP_INSERT = 2
 
-    cache[0] = np.append(puzzle.GOAL, [0, -1])
+
+class Pruning_Mode(Enum):
+    DISABLED = 0
+    BACKTRACKS = 1
+    TRANSPOSABLES = 2
+
+
+def generate_bfs(puzzle: Puzzle, size: int, repeats: Repeats_Mode, prune: Pruning_Mode):
+    actual_size = size + puzzle.ADJACENT_COUNT(puzzle)
+    cache = np.zeros((actual_size, puzzle.POSITION_SIZE(puzzle) + 2), dtype=np.int8)
+
+    cache[0] = np.append(puzzle.GOAL(puzzle), [0, -1])
     num_cached = 1
     queue_idx = 0
     
@@ -13,16 +28,16 @@ def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
         curr = cache[queue_idx]
         queue_idx += 1
 
-        adj = puzzle.adjacents(curr[:-2])
+        adj = puzzle.adjacents(puzzle, curr[:-2])
         dist = np.full((len(adj), 1), curr[-2] + 1)
         adj = np.append(adj, dist, axis=1)
-        mov = np.reshape(np.arange(0, puzzle.ADJACENT_COUNT, dtype=np.int8), (-1, 1))
+        mov = np.reshape(np.arange(0, puzzle.ADJACENT_COUNT(puzzle), dtype=np.int8), (-1, 1))
         adj = np.append(adj, mov, axis=1)
 
-        if prevent_backtrace:
+        if prune.value & Pruning_Mode.BACKTRACKS.value:
             last_move = curr[-1]
             if last_move != -1:
-                adj = np.delete(adj, puzzle.inverse_move(last_move), axis=0)
+                adj = np.delete(adj, puzzle.backtracks_of(puzzle, last_move), axis=0)
 
         cache[num_cached : num_cached + len(adj)] = adj
         num_cached += len(adj)
@@ -33,20 +48,21 @@ def generate_bfs(puzzle, size, *, unique=False, prevent_backtrace=False):
     # remove any ending zero rows
     cache = np.delete(cache, np.s_[-(actual_size - num_cached):], axis=0)
 
-    if unique:
+    if repeats.value & Repeats_Mode.REMOVE.value:
         cache = _remove_repeats(cache)
+        print(cache.shape)
 
     return cache
 
 
-def save_cache(puzzle, cache_name, cache):
-    np.save(f'puzzles/{puzzle.NAME}/{cache_name}', cache)
+def save_cache(puzzle: Puzzle, cache_name: str, cache: np.ndarray) -> None:
+    np.save(f'caches/{puzzle.NAME(puzzle)}/{cache_name}', cache)
 
 
-def load_cache(puzzle, cache_name):
-    return np.load(f'puzzles/{puzzle.NAME}/{cache_name}.npy')
+def load_cache(puzzle: Puzzle, cache_name: str) -> np.ndarray:
+    return np.load(f'caches/{puzzle.NAME(puzzle)}/{cache_name}.npy')
 
 
-def _remove_repeats(cache):
+def _remove_repeats(cache: np.ndarray) -> np.ndarray:
     _, indices = np.unique(cache[:, :-1], axis=0, return_index=True)
     return cache[np.sort(indices)]

@@ -4,21 +4,17 @@ import numpy as np
 
 class Puzzle(ABC):
     
-    @property
     @abstractmethod
-    def NAME() -> str: pass
+    def NAME(cls) -> str: pass
 
-    @property
     @abstractmethod
-    def GOAL() -> np.ndarray: pass
+    def GOAL(cls) -> np.ndarray: pass
 
-    @property
     @abstractmethod
-    def POSITION_SIZE() -> int: pass
+    def POSITION_SIZE(cls) -> int: pass
 
-    @property
     @abstractmethod
-    def ADJACENT_COUNT() -> int: pass
+    def ADJACENT_COUNT(cls) -> int: pass
 
     @abstractmethod
     def string(position: np.ndarray) -> str: pass
@@ -30,45 +26,59 @@ class Puzzle(ABC):
     def move_index_of(expansion: tuple[int]) -> int: pass
 
     @abstractmethod
-    def move(position: np.ndarray, move_index: int) -> np.ndarray: pass
+    def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool: pass
+
+    @abstractmethod
+    def is_transposable(cls, move_index: int, prev_move_index: int) -> bool: pass
+
+    @abstractmethod
+    def move(cls, position: np.ndarray, move_index: int) -> np.ndarray: pass
+
+    def backtracks_of(cls, move_index: int) -> list[int]:
+        backs = []
+        for idx in range(cls.ADJACENT_COUNT(cls)):
+            if cls.is_backtrack(cls, move_index, idx):
+                backs.append(idx)
+        return backs
+
+    def transposables_of(cls, move_index: int) -> list[int]:
+        trans = []
+        for idx in range(cls.ADJACENT_COUNT(cls)):
+            if cls.is_transposable(cls, move_index, idx):
+                trans.append(idx)
+        return trans
 
     def adjacents(cls, position: np.ndarray) -> np.ndarray:
-        adj = np.empty((cls.ADJACENT_COUNT, cls.POSITION_SIZE), dtype=np.int8)
-        for move_index in range(cls.ADJACENT_COUNT):
-            adj[move_index] = cls.move(position, move_index)
+        adj = np.empty((cls.ADJACENT_COUNT(cls), cls.POSITION_SIZE(cls)), dtype=np.int8)
+        for move_index in range(cls.ADJACENT_COUNT(cls)):
+            adj[move_index] = cls.move(cls, position, move_index)
         return adj
 
 
 class Cube(Puzzle):
     
-    @property
     @abstractmethod
     def CUBE_SIZE() -> int: pass
 
-    @property
     def NAME(cls) -> str:
-        return f'cube{cls.CUBE_SIZE}'
+        return f'cube{cls.CUBE_SIZE()}'
 
-    @property
     def GOAL(cls) -> np.ndarray:
-        movable_per_side = cls.CUBE_SIZE ** 2 - cls.CUBE_SIZE % 2
+        movable_per_side = cls.CUBE_SIZE() ** 2 - cls.CUBE_SIZE() % 2
         return np.sort(np.array(list(range(6)) * movable_per_side, dtype=np.int8))
     
-    @property
     def POSITION_SIZE(cls) -> int:
-        movable_per_side = cls.CUBE_SIZE ** 2 - cls.CUBE_SIZE % 2
+        movable_per_side = cls.CUBE_SIZE() ** 2 - cls.CUBE_SIZE() % 2
         return 6 * movable_per_side
     
-    @property
     def ADJACENT_COUNT(cls) -> int:
-        return 9 * (cls.CUBE_SIZE - 1)
+        return 9 * (cls.CUBE_SIZE() - 1)
     
-    # TODO: implement expansion_of(), move_index_of()
+    # TODO: implement expansion_of(), move_index_of(), is_backward(), is_transposable()
 
 
 class Cube3(Cube):
     
-    @property
     def CUBE_SIZE() -> int:
         return 3
 
@@ -100,6 +110,18 @@ class Cube3(Cube):
     
     def move_index_of(face: int, amount: int) -> int:
         return 3 * face + amount - 1
+    
+    def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool:
+        face, amount = cls.expansion_of(move_index)
+        prev_face, prev_amount = cls.expansion_of(prev_move_index)
+        return face == prev_face
+    
+    def is_transposable(cls, move_index: int, prev_move_index: int) -> bool:
+        face, _ = cls.expansion_of(move_index)
+        prev_face, _ = cls.expansion_of(prev_move_index)
+        return ((face == 0 and prev_face == 5) or (face == 1 and prev_face == 3) or
+                (face == 2 and prev_face == 4) or (face == 3 and prev_face == 1) or
+                (face == 4 and prev_face == 2) or (face == 5 and prev_face == 0))
     
     def move(cls, position: np.ndarray, move_index: int) -> np.ndarray:
         face, amount = cls.expansion_of(move_index)
