@@ -4,15 +4,23 @@ import numpy as np
 
 class Puzzle(ABC):
     
+    @classmethod
+    @property
     @abstractmethod
     def NAME(cls) -> str: pass
 
+    @classmethod
+    @property
     @abstractmethod
     def GOAL(cls) -> np.ndarray: pass
 
+    @classmethod
+    @property
     @abstractmethod
     def POSITION_SIZE(cls) -> int: pass
 
+    @classmethod
+    @property
     @abstractmethod
     def ADJACENT_COUNT(cls) -> int: pass
 
@@ -25,61 +33,79 @@ class Puzzle(ABC):
     @abstractmethod
     def move_index_of(expansion: tuple[int]) -> int: pass
 
+    @classmethod
     @abstractmethod
     def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool: pass
 
+    @classmethod
     @abstractmethod
     def is_transposable(cls, move_index: int, prev_move_index: int) -> bool: pass
 
+    @classmethod
     @abstractmethod
     def move(cls, position: np.ndarray, move_index: int) -> np.ndarray: pass
 
+    @classmethod
     def backtracks_of(cls, move_index: int) -> list[int]:
         backs = []
-        for idx in range(cls.ADJACENT_COUNT(cls)):
-            if cls.is_backtrack(cls, move_index, idx):
+        for idx in range(cls.ADJACENT_COUNT):
+            if cls.is_backtrack(move_index, idx):
                 backs.append(idx)
         return backs
 
+    @classmethod
     def transposables_of(cls, move_index: int) -> list[int]:
         trans = []
-        for idx in range(cls.ADJACENT_COUNT(cls)):
-            if cls.is_transposable(cls, move_index, idx):
+        for idx in range(cls.ADJACENT_COUNT):
+            if cls.is_transposable(move_index, idx):
                 trans.append(idx)
         return trans
 
+    @classmethod
     def adjacents(cls, position: np.ndarray) -> np.ndarray:
-        adj = np.empty((cls.ADJACENT_COUNT(cls), cls.POSITION_SIZE(cls)), dtype=np.int8)
-        for move_index in range(cls.ADJACENT_COUNT(cls)):
-            adj[move_index] = cls.move(cls, position, move_index)
+        adj = np.empty((cls.ADJACENT_COUNT, cls.POSITION_SIZE), dtype=np.int8)
+        for move_index in range(cls.ADJACENT_COUNT):
+            adj[move_index] = cls.move(position, move_index)
         return adj
 
 
 class Cube(Puzzle):
     
+    @classmethod
+    @property
     @abstractmethod
-    def CUBE_SIZE() -> int: pass
+    def CUBE_SIZE(cls) -> int: pass
 
+    @classmethod
+    @property
     def NAME(cls) -> str:
-        return f'cube{cls.CUBE_SIZE()}'
+        return f'cube{cls.CUBE_SIZE}'
 
+    @classmethod
+    @property
     def GOAL(cls) -> np.ndarray:
-        movable_per_side = cls.CUBE_SIZE() ** 2 - cls.CUBE_SIZE() % 2
+        movable_per_side = cls.CUBE_SIZE ** 2 - cls.CUBE_SIZE % 2
         return np.sort(np.array(list(range(6)) * movable_per_side, dtype=np.int8))
     
+    @classmethod
+    @property
     def POSITION_SIZE(cls) -> int:
-        movable_per_side = cls.CUBE_SIZE() ** 2 - cls.CUBE_SIZE() % 2
+        movable_per_side = cls.CUBE_SIZE ** 2 - cls.CUBE_SIZE % 2
         return 6 * movable_per_side
     
+    @classmethod
+    @property
     def ADJACENT_COUNT(cls) -> int:
-        return 9 * (cls.CUBE_SIZE() - 1)
+        return 9 * (cls.CUBE_SIZE - 1)
     
     # TODO: implement expansion_of(), move_index_of(), is_backward(), is_transposable()
 
 
 class Cube3(Cube):
     
-    def CUBE_SIZE() -> int:
+    @classmethod
+    @property
+    def CUBE_SIZE(cls) -> int:
         return 3
 
     def string(position: np.ndarray) -> str:
@@ -111,11 +137,13 @@ class Cube3(Cube):
     def move_index_of(face: int, amount: int) -> int:
         return 3 * face + amount - 1
     
+    @classmethod
     def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool:
         face, amount = cls.expansion_of(move_index)
         prev_face, prev_amount = cls.expansion_of(prev_move_index)
         return face == prev_face
     
+    @classmethod
     def is_transposable(cls, move_index: int, prev_move_index: int) -> bool:
         face, _ = cls.expansion_of(move_index)
         prev_face, _ = cls.expansion_of(prev_move_index)
@@ -123,6 +151,7 @@ class Cube3(Cube):
                 (face == 2 and prev_face == 4) or (face == 3 and prev_face == 1) or
                 (face == 4 and prev_face == 2) or (face == 5 and prev_face == 0))
     
+    @classmethod
     def move(cls, position: np.ndarray, move_index: int) -> np.ndarray:
         face, amount = cls.expansion_of(move_index)
         new_pos = position.copy()
