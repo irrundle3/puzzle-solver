@@ -223,8 +223,9 @@ class Cube3(Cube):
 # 458.2% faster than np.roll()
 # Usage speeds up Cube3.adjacents() by 194.7%
 def roll(arr: np.ndarray, offset: int) -> np.ndarray:
-    offset %= len(arr)
-    new_arr = np.empty(len(arr), dtype=arr.dtype)
-    new_arr[offset:] = arr[:len(arr) - offset]
-    new_arr[:offset] = arr[len(arr) - offset:]
+    length = len(arr)
+    offset %= length
+    new_arr = np.empty(length, dtype=arr.dtype)
+    new_arr[offset:] = arr[:length - offset]
+    new_arr[:offset] = arr[length - offset:]
     return new_arr
