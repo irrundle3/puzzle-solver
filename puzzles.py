@@ -35,37 +35,21 @@ class Puzzle(ABC):
 
     @classmethod
     @abstractmethod
-    def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool: pass
+    def backtracks(cls, move_index: int) -> list[int]: pass
 
     @classmethod
     @abstractmethod
-    def is_transposable(cls, move_index: int, prev_move_index: int) -> bool: pass
+    def transposables(cls, move_index: int) -> list[int]: pass
 
     @classmethod
     @abstractmethod
     def move(cls, position: np.ndarray, move_index: int) -> np.ndarray: pass
 
     @classmethod
-    def backtracks_of(cls, move_index: int) -> list[int]:
-        backs = []
-        for idx in range(cls.ADJACENT_COUNT):
-            if cls.is_backtrack(move_index, idx):
-                backs.append(idx)
-        return backs
-
-    @classmethod
-    def transposables_of(cls, move_index: int) -> list[int]:
-        trans = []
-        for idx in range(cls.ADJACENT_COUNT):
-            if cls.is_transposable(move_index, idx):
-                trans.append(idx)
-        return trans
-
-    @classmethod
-    def adjacents(cls, position: np.ndarray) -> np.ndarray:
-        adj = np.empty((cls.ADJACENT_COUNT, cls.POSITION_SIZE), dtype=np.int8)
-        for move_index in range(cls.ADJACENT_COUNT):
-            adj[move_index] = cls.move(position, move_index)
+    def adjacents(cls, position: np.ndarray, allowed_moves: np.ndarray) -> np.ndarray:
+        adj = np.empty((len(allowed_moves), cls.POSITION_SIZE), dtype=np.int8)
+        for i in range(len(allowed_moves)):
+            adj[i] = cls.move(position, allowed_moves[i])
         return adj
 
 
@@ -74,7 +58,7 @@ class Cube(Puzzle):
     @classmethod
     @property
     @abstractmethod
-    def CUBE_SIZE(cls) -> int: pass
+    def CUBE_SIZE(cls) -> int: return 0
 
     @classmethod
     @property
@@ -98,7 +82,7 @@ class Cube(Puzzle):
     def ADJACENT_COUNT(cls) -> int:
         return 9 * (cls.CUBE_SIZE - 1)
     
-    # TODO: implement expansion_of(), move_index_of(), is_backward(), is_transposable()
+    # TODO: implement expansion_of(), move_index_of(), backtracks(), transposables()
 
 
 class Cube3(Cube):
@@ -138,19 +122,22 @@ class Cube3(Cube):
         return 3 * face + amount - 1
     
     @classmethod
-    def is_backtrack(cls, move_index: int, prev_move_index: int) -> bool:
-        face, amount = cls.expansion_of(move_index)
-        prev_face, prev_amount = cls.expansion_of(prev_move_index)
-        return face == prev_face
+    def backtracks(cls, move_index: int) -> list[int]:
+        face = move_index // 3
+        backs = []
+        for amount in range(1, 4):
+            backs.append(cls.move_index_of(face, amount))
+        return backs
     
     @classmethod
-    def is_transposable(cls, move_index: int, prev_move_index: int) -> bool:
-        face, _ = cls.expansion_of(move_index)
-        prev_face, _ = cls.expansion_of(prev_move_index)
-        return ((face == 0 and prev_face == 5) or (face == 1 and prev_face == 3) or
-                (face == 2 and prev_face == 4) or (face == 3 and prev_face == 1) or
-                (face == 4 and prev_face == 2) or (face == 5 and prev_face == 0))
-    
+    def transposables(cls, move_index: int) -> list[int]:
+        face = move_index // 3
+        face = {0:5, 1:3, 2:4, 3:1, 4:2, 5:0}[face]
+        trans = []
+        for amount in range(1, 4):
+            trans.append(cls.move_index_of(face, amount))
+        return trans
+
     @classmethod
     def move(cls, position: np.ndarray, move_index: int) -> np.ndarray:
         face, amount = cls.expansion_of(move_index)
