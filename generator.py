@@ -30,17 +30,17 @@ def generate_bfs(puzzle: Puzzle, size: int, repeats: Repeats, prune: Pruning):
         last_move_idx = curr[-1]
         if last_move_idx != -1:
             if prune.value & Pruning.BACKTRACKS.value:
-                removed_moves.append(puzzle.backtracks(last_move_idx))
+                removed_moves.extend(puzzle.backtracks(last_move_idx))
             if prune.value & Pruning.TRANSPOSABLES.value:
-                removed_moves.append(puzzle.transposables(last_move_idx))
-        allowed_moves = np.delete(np.arange(puzzle.ADJACENT_COUNT, dtype=np.int8), removed_moves)
+                removed_moves.extend(puzzle.transposables(last_move_idx))
+        allowed_moves = [i for i in range(puzzle.ADJACENT_COUNT) if i not in removed_moves]
         num_neighbors = len(allowed_moves)
 
-        adj = puzzle.adjacents(curr[:-2], allowed_moves)
-        dist = np.full((num_neighbors, 1), curr[-2] + 1)
-        prev = np.reshape(allowed_moves, (-1, 1))
-        adj = np.append(np.append(adj, dist, axis=1), prev, axis=1)
-        
+        adjacents = puzzle.adjacents(curr[:-2], allowed_moves)
+        adj = np.full((num_neighbors, puzzle.POSITION_SIZE + 2), curr[-2] + 1, dtype=np.int8)
+        adj[:, :puzzle.POSITION_SIZE] = adjacents
+        adj[:, -1] = allowed_moves
+
         cache[num_cached : num_cached + num_neighbors] = adj
         num_cached += num_neighbors
 
