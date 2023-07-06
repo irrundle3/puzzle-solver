@@ -30,9 +30,9 @@ def generate_bfs(puzzle: Puzzle, size: int, repeats: Repeats, prune: Pruning):
         last_move_idx = curr[-1]
         if last_move_idx != -1:
             if prune.value & Pruning.BACKTRACKS.value:
-                removed_moves.extend(puzzle.backtracks(last_move_idx))
+                removed_moves.extend(puzzle.BACKTRACKS[last_move_idx])
             if prune.value & Pruning.TRANSPOSABLES.value:
-                removed_moves.extend(puzzle.transposables(last_move_idx))
+                removed_moves.extend(puzzle.TRANSPOSABLES[last_move_idx])
         allowed_moves = [i for i in range(puzzle.ADJACENT_COUNT) if i not in removed_moves]
         num_neighbors = len(allowed_moves)
 
@@ -48,8 +48,8 @@ def generate_bfs(puzzle: Puzzle, size: int, repeats: Repeats, prune: Pruning):
 
     if repeats.value & Repeats.REMOVE.value:
         cache = _remove_repeats(cache)
-        print(cache.shape)
 
+    print(cache.shape)
     return cache
 
 

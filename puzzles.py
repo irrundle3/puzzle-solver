@@ -4,6 +4,15 @@ import numpy as np
 
 class Puzzle(ABC):
     
+    EXPANSIONS = ()
+    MOVE_INDICES = {}
+    BACKTRACKS = ()
+    TRANSPOSABLES = ()
+
+    @classmethod
+    @abstractmethod
+    def init(cls) -> None: pass
+
     @classmethod
     @property
     @abstractmethod
@@ -27,20 +36,6 @@ class Puzzle(ABC):
     @abstractmethod
     def string(position: np.ndarray) -> str: pass
 
-    @abstractmethod
-    def expansion_of(move_index: int) -> tuple[int]: pass
-
-    @abstractmethod
-    def move_index_of(expansion: tuple[int]) -> int: pass
-
-    @classmethod
-    @abstractmethod
-    def backtracks(cls, move_index: int) -> list[int]: pass
-
-    @classmethod
-    @abstractmethod
-    def transposables(cls, move_index: int) -> list[int]: pass
-
     @classmethod
     @abstractmethod
     def move(cls, position: np.ndarray, move_index: int) -> list[int]: pass
@@ -50,8 +45,11 @@ class Puzzle(ABC):
         return [cls.move(position, move) for move in allowed_moves]
 
 
-class Cube(Puzzle):
-    
+class Cube(Puzzle):     
+
+    EDGES = ()
+    NEW_EDGES = ()
+
     @classmethod
     @property
     @abstractmethod
@@ -79,11 +77,48 @@ class Cube(Puzzle):
     def ADJACENT_COUNT(cls) -> int:
         return 9 * (cls.CUBE_SIZE - 1)
     
-    # TODO: implement expansion_of(), move_index_of(), backtracks(), transposables()
-
 
 class Cube3(Cube):
     
+    @classmethod
+    def init(cls) -> None:
+        cls.EXPANSIONS = tuple([(move // 3, move % 3 + 1) for move in range(cls.ADJACENT_COUNT)])
+
+        cls.MOVE_INDICES = {}
+        for face in range(6):
+            for amount in (1, 2, 3):
+                cls.MOVE_INDICES[(face, amount)] = 3 * face + amount - 1
+        
+        cls.BACKTRACKS = []
+        for move_index in range(cls.ADJACENT_COUNT):
+            face, _ = cls.EXPANSIONS[move_index]
+            backs = [cls.MOVE_INDICES[(face, amount)] for amount in (1, 2, 3)]
+            cls.BACKTRACKS.append(tuple(backs))
+        cls.BACKTRACKS = tuple(cls.BACKTRACKS)
+
+        cls.TRANSPOSABLES = []
+        for move_index in range(cls.ADJACENT_COUNT):
+            face, _ = cls.EXPANSIONS[move_index]
+            opposite_face = {0:5, 1:3, 2:4, 3:1, 4:2, 5:0}[face]
+            trans = [cls.MOVE_INDICES[(opposite_face, amount)] for amount in (1, 2, 3)]
+            cls.TRANSPOSABLES.append(tuple(trans))
+        cls.TRANSPOSABLES = tuple(cls.TRANSPOSABLES)
+
+        cls.EDGES = []
+        cls.NEW_EDGES = []
+        for move_index in range(cls.ADJACENT_COUNT):
+            face, amount = cls.EXPANSIONS[move_index]
+            edges = ((8, 9, 10, 32, 33, 34, 24, 25, 26, 16, 17, 18),
+                     (4, 5, 6, 18, 19, 20, 40, 41, 42, 38, 39, 32),
+                     (6, 7, 0, 26, 27, 28, 46, 47, 40, 14, 15, 8),
+                     (0, 1, 2, 34, 35, 36, 44, 45, 46, 22, 23, 16),
+                     (2, 3, 4, 10, 11, 12, 42, 43, 44, 30, 31, 24),
+                     (12, 13, 14, 20, 21, 22, 28, 29, 30, 36, 37, 38))
+            cls.EDGES.append(edges[face])
+            cls.NEW_EDGES.append(tuple(roll(cls.EDGES[move_index], -3 * amount)))
+        cls.EDGES = tuple(cls.EDGES)
+        cls.NEW_EDGES = tuple(cls.NEW_EDGES)
+
     @classmethod
     @property
     def CUBE_SIZE(cls) -> int:
@@ -109,54 +144,22 @@ class Cube3(Cube):
         repr += f"        {position[47]} 5 {position[43]}\n"
         repr += f"        {position[46]} {position[45]} {position[44]}\n"
         return repr
-    
-    def expansion_of(move_index: int) -> tuple[int]:
-        face = int(move_index / 3)
-        amount = move_index - 3 * face + 1
-        return face, amount
-    
-    def move_index_of(face: int, amount: int) -> int:
-        return 3 * face + amount - 1
-    
-    @classmethod
-    def backtracks(cls, move_index: int) -> list[int]:
-        face = int(move_index / 3)
-        return [cls.move_index_of(face, amount) for amount in (1, 2, 3)]
-    
-    @classmethod
-    def transposables(cls, move_index: int) -> list[int]:
-        face = int(move_index / 3)
-        face = {0:5, 1:3, 2:4, 3:1, 4:2, 5:0}[face]
-        return [cls.move_index_of(face, amount) for amount in (1, 2, 3)]
 
     @classmethod
     def move(cls, position: np.ndarray, move_index: int) -> list[int]:
         position = list(position)
-        face = int(move_index / 3)
-        amount = move_index - 3 * face + 1
         new_pos = position.copy()
+        face, amount = cls.EXPANSIONS[move_index]
 
         # Move the appropriate face
         new_pos[8*face : 8*face+8] = roll(position[8*face : 8*face+8], 2*amount)
 
         # Move the appropriate edges
-        edges = None
-        if face == 0:
-            edges = [8, 9, 10, 32, 33, 34, 24, 25, 26, 16, 17, 18]
-        elif face == 1:
-            edges = [4, 5, 6, 18, 19, 20, 40, 41, 42, 38, 39, 32]
-        elif face == 2:
-            edges = [6, 7, 0, 26, 27, 28, 46, 47, 40, 14, 15, 8]
-        elif face == 3:
-            edges = [0, 1, 2, 34, 35, 36, 44, 45, 46, 22, 23, 16]
-        elif face == 4:
-            edges = [2, 3, 4, 10, 11, 12, 42, 43, 44, 30, 31, 24]
-        else:
-            edges = [12, 13, 14, 20, 21, 22, 28, 29, 30, 36, 37, 38]
-        new_edges = roll(edges, -3 * amount)
-        for new_edge, edge in zip(new_edges, edges):
+        edges = cls.EDGES[move_index]
+        new_edges = cls.NEW_EDGES[move_index]
+        for edge, new_edge in zip(edges, new_edges):
             new_pos[new_edge] = position[edge]
-        
+
         return new_pos
     
 
