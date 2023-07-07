@@ -1,3 +1,5 @@
+# TODO: Always add a docstring at the beginning of ur program
+
 import numpy as np
 from enum import Enum
 import random
@@ -6,18 +8,21 @@ from puzzles import Puzzle
 
 
 class Repeats(Enum):
+    # TODO: Docstring
     KEEP = 0
     REMOVE = 1
     STOP_INSERT = 2
 
 
 class Pruning(Enum):
+    # TODO: Docstring
     DISABLED = 0
     BACKTRACKS = 1
     TRANSPOSABLES = 2
 
 
 def generate_bfs(puzzle: Puzzle, repeats: Repeats, pruning: Pruning, size: int) -> np.ndarray:
+    # TODO: Docstring
     cache = _init_cache(puzzle, size)
     num_cached = 1
     queue_idx = 0
@@ -30,6 +35,7 @@ def generate_bfs(puzzle: Puzzle, repeats: Repeats, pruning: Pruning, size: int) 
 
     
 def generate_random(puzzle: Puzzle, repeats: Repeats, pruning: Pruning, size: int) -> np.ndarray:
+    # TODO: Docstring
     cache = _init_cache(puzzle, size)
     num_cached = 1
 
@@ -40,14 +46,17 @@ def generate_random(puzzle: Puzzle, repeats: Repeats, pruning: Pruning, size: in
 
 
 def save_cache(puzzle: Puzzle, cache_name: str, cache: np.ndarray) -> None:
+     # TODO: Docstring
     np.save(f'caches/{puzzle.NAME}/{cache_name}', cache)
 
 
 def load_cache(puzzle: Puzzle, cache_name: str) -> np.ndarray:
+     # TODO: Docstring
     return np.load(f'caches/{puzzle.NAME}/{cache_name}.npy')
 
 
 def _init_cache(puzzle: Puzzle, size: int) -> np.ndarray:
+     # TODO: Docstring
     cache = np.zeros((size + puzzle.ADJACENT_COUNT, puzzle.POSITION_SIZE + 2), dtype=np.int8)
     cache[0] = np.append(puzzle.GOAL, [0, -1])
     return cache
@@ -59,6 +68,7 @@ def _expand_node(puzzle: Puzzle,
                  num_cached: int,
                  curr_idx: int,
                  ) -> int:
+     # TODO: Docstring
     # Get current node
     curr = cache[curr_idx]
 
@@ -87,6 +97,7 @@ def _expand_node(puzzle: Puzzle,
 
 
 def _cleanup_cache(repeats: Repeats, cache: np.ndarray, num_cached: int) -> np.ndarray:
+    # TODO: Add docstrings here
     # Remove any extra rows
     cache = np.delete(cache, np.s_[-(len(cache) - num_cached):], axis=0)
 
